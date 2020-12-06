@@ -1,0 +1,90 @@
+a.
+For $f in document("Farmer.xml")//Farmer
+For $k in document("Farmer.xml")//Kids
+For $s in document("Farmer.xml")//School
+Where   ($k/f_sin = $f/SIN or $k/m_sin = $f/SIN)
+        and $k/s_name = $s/sname
+Return  <R> {$f/SIN} </R>
+
+b.
+For $s in document("Farmer.xml")//School
+Where EMPTY (
+        For $f in document("Farmer.xml")//Farmer
+        For $k in document("Farmer.xml")//Kids
+        Where   ($k/f_sin = $f/SIN or $k/m_sin = $f/SIN)
+                and $k/s_name = $s/sname
+                and $s/vname <> $f/vname
+        Return  <R2> {$k/SIN} </R2>
+        )
+Return  <R> {$s/sname} </R>
+
+c.
+Let $p = max(document("Farmer.xml")//Village/population)
+
+For $v in document("Farmer.xml")//Village
+Where   $v/population = $p
+Return  <R> {$v/name} </R>
+
+d.
+For $f in document("Farmer.xml")//Farmer
+Where   (For $k in document("Farmer.xml")//Kids
+        Where   ($k/f_sin = $f/SIN or $k/m_sin = $f/SIN)
+                and $k/s_name = $s/sname
+        Return  <R2> {$k/s_name} </R2>)
+        contains
+        (For $s in document("Farmer.xml")//School
+        Return  <R3> {$s/sname} </R3>)
+Return  <R> {$f/SIN} </R>
+
+e.
+For $v in document("Farmer.xml")//Village
+Where EMPTY (
+        For $s in document("Farmer.xml")//School
+        Where   $s/vname = $v/name
+                Return  <R2> {$s} </R2>
+        )
+Return  <R> {$v/name} </R>
+
+f.
+For $f in document("Farmer.xml")//Farmer
+For $k in document("Farmer.xml")//Kids
+For $s in document("Farmer.xml")//School
+Where   ($k/f_sin = $f/SIN or $k/m_sin = $f/SIN)
+        and $f/name = 'Mark'
+        and EMPTY (
+                For $k2 in document("Farmer.xml")//Kids
+                Where   ($k2/f_sin = $f/SIN or $k2/m_sin = $f/SIN)
+                        and $k2/s_name <> $s/sname
+                Return  <R2> {$k2/SIN} </R2>
+        )
+Return  <R> {$s/sname} </R>
+
+g.
+For $f in document("Farmer.xml")//Farmer
+Where EMPTY (
+        For $k in document("Farmer.xml")//Kids
+        For $s in document("Farmer.xml")//School
+        For $v1 in document("Farmer.xml")//Village
+        For $v2 in document("Farmer.xml")//Village
+        Where   ($k/f_sin = $f/SIN or $k/m_sin = $f/SIN)
+                and $k/s_name = $s/sname
+                and $s/vname = $v1/vname
+                and $f/vname = $v2/vname
+                and $v1/province = $v2/province
+        Return  <R2> {$k} </R2>
+        )
+)
+Return  <R> {$f/sname} </R>
+
+
+
+
+<xs:key name="SIN">
+        <xs:selector xpath="/Farmer/Farmer"/>
+        <xs:field xpath="@SIN/"/>
+</xs:key>
+
+<xs:keyref name="vname" refer="name“>
+        <xs:selector xpath="/Farmer/Village"/>
+        <xs:field xpath="@name"/>
+</xs:keyref>

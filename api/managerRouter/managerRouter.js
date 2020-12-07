@@ -177,4 +177,103 @@ managerRouter.delete('/worker/remove', managerAuth, async (req, res) => {
     }
 })
 
+//edit a worker's info
+managerRouter.put('/project/worker/edit', managerAuth, async (req, res) => {
+    try {
+        const sql = `UPDATE Worker SET Name=?, Username=?, Password=?, WHERE Id=?`;
+        db.run(sql, [req.body.name, req.body.username, req.body.password, req.body.id], (err) => {
+            if (err) {
+                throw new Error(err);
+            }
+            res.status(200).send();
+        });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
+
+module.exports = managerRouter;
+
+//view payment
+managerRouter.post('/payment/view', managerAuth, async (req, res) => {
+    try {
+        const sql = `SELECT * FROM Project, WHERE W_id=? AND M_id=? AND Submit_time=? AND SW_id=? AND SM_id=?`;
+        let result = [];
+        db.each(sql, (err, row) => {
+            if (err) {
+                throw new Error(err);
+            }
+            result.push({
+                date_paid: row.Date_paid,
+                amount: row.Amount
+            });
+            res.status(200).send(result);
+        });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
+
+//Assigning task
+managerRouter.post('/supply/assign', managerAuth, async (req, res) => {
+    try {
+        const sql = `INSERT INTO Supply VALUES (?,?,?,?,?)`;
+        db.run(sql, [req.body.id, req.body.w_id, req.body.name, req.body.quantity, req.body.expected], (err) => {
+            if (err) {
+                throw new Error(err);
+            }
+            res.status(201).send();
+        });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
+
+
+
+//Add Submission
+managerRouter.post('/submission/add', managerAuth, async (req, res) => {
+    try {
+        const sql = `INSERT INTO Submission VALUES (?,?,?,?)`;
+        db.run(sql, [req.body.submit_time, req.body.w_id, req.body.m_id, req.body[`#product`]], (err) => {
+            if (err) {
+                throw new Error(err);
+            }
+            res.status(201).send();
+        });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
+
+
+//Edit Submission
+managerRouter.put('/submission/add', managerAuth, async (req, res) => {
+    try {
+        const sql = `UPDATE Submission SET #product=? WHERE W_id=? AND M_id=? AND Submit_time=?`;
+        db.run(sql, [req.body[`#product`], req.body.w_id, req.body.m_id, req.body.submit_time], (err) => {
+            if (err) {
+                throw new Error(err);
+            }
+            res.status(200).send();
+        });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
+
+//Remove Submission
+managerRouter.delete('/submission/remove', managerAuth, async (req, res) => {
+    try {
+        db.run(`DELETE FROM Submission WHERE W_id=? AND M_id=? AND Submit_time=?`, [req.body.w_id, req.body.m_id, req.body.submit_time], (err) => {
+            if (err) {
+                throw new Error(err);
+            }
+        })
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
+
 module.exports = managerRouter;

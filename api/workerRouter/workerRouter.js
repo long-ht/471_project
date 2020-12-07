@@ -40,7 +40,8 @@ workerRouter.get('/supply', workerAuth, async (req, res) => {
                 id: row.Id,
                 w_id: row.W_id,
                 name: row.Name,
-                quantity: row.Quantity
+                quantity: row.Quantity,
+                expected: row.Expected
             })
         });
         res.status(200).send(result);
@@ -63,7 +64,7 @@ workerRouter.get('/submission', workerAuth, async (req, res) => {
                 submit_time: row.Submit_time,
                 w_id: row.W_id,
                 m_id: row.M_id,
-                product: row.Product
+                [`#product`]: row[`#product`]
             })
         });
         res.status(200).send(result);

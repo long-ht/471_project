@@ -1,5 +1,5 @@
 const db = require('../database/database');
-const managerAuth = require('../middleware/auth');
+const managerAuth = require('../middleware/managerAuth.js');
 const express = require('express');
 const managerRouter = express.Router();
 
@@ -8,8 +8,8 @@ managerRouter.post('/login', async (req, res) => {
     try {
         const sql = `SELECT * FROM Manager WHERE Username=? AND Password=?`;
         db.get(sql, [req.body.username, req.body.password], (err, row) => {
-            if (err || !row) {
-                throw new Error;
+            if (err || row == null) {
+                return res.status(400).send({ error: `Invalid credentials` });
             }
             const user = {
                 id: row.Id,
@@ -27,16 +27,57 @@ managerRouter.post('/project/view', managerAuth, async (req, res) => {
     try {
         const sql = `SELECT * FROM Project`;
         let result = [];
-        db.each(sql, (err, row) => {
+        db.all(sql, (err, rows) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
-            result.push({
-                name: row.Name,
-                c_name: row.C_name,
-                priority: row.Priority,
-                deadline: row.Deadline,
-            });
+            rows.forEach(row => {
+                result.push({
+                    name: row.Name,
+                    c_name: row.C_name,
+                    priority: row.Priority,
+                    deadline: row.Deadline,
+                });
+            })
+            res.status(200).send(result);
+        });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
+
+//add new company
+managerRouter.post('/company/add', managerAuth, async (req, res) => {
+    try {
+        const sql = `INSERT INTO Company VALUES (?,?,?,?)`;
+        db.run(sql, [req.body.name, req.body.phone, req.body.email, req.body.address], (err) => {
+            if (err) {
+                return res.status(500).send({ error: err.message });
+            }
+            res.status(201).send();
+        });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
+
+//view all company
+managerRouter.post('/company/view', managerAuth, async (req, res) => {
+    try {
+        const sql = `SELECT * FROM Company`;
+        let result = [];
+        db.all(sql, (err, rows) => {
+            if (err) {
+                return res.status(500).send({ error: err.message });
+            }
+            rows.forEach(row => {
+                result.push({
+                    name: row.Name,
+                    phone: row.Phone,
+                    email: row.Email,
+                    address: row.Address,
+                });
+            })
             res.status(200).send(result);
         });
     } catch (err) {
@@ -50,7 +91,7 @@ managerRouter.post('/project/add', managerAuth, async (req, res) => {
         const sql = `INSERT INTO Project VALUES (?,?,?,?)`;
         db.run(sql, [req.body.name, req.body.c_name, req.body.priority, req.body.deadline], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
             res.status(201).send();
         });
@@ -64,18 +105,20 @@ managerRouter.post('/project/product/view', managerAuth, async (req, res) => {
     try {
         const sql = `SELECT * FROM Product WHERE P_name=?`;
         let result = [];
-        db.each(sql, req.body.p_name, (err, row) => {
+        db.all(sql, req.body.p_name, (err, rows) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
-            result.push({
-                id: row.Id,
-                p_name: row.P_name,
-                size: row.Size,
-                color: row.Color,
-                rate: row.Rate,
-                rattler: row.Rattler
-            });
+            rows.forEach(row => {
+                result.push({
+                    id: row.Id,
+                    p_name: row.P_name,
+                    size: row.Size,
+                    color: row.Color,
+                    rate: row.Rate,
+                    rattler: row.Rattler
+                });
+            })
             res.status(200).send(result);
         });
     } catch (err) {
@@ -89,7 +132,7 @@ managerRouter.post('/project/product/add', managerAuth, async (req, res) => {
         const sql = `INSERT INTO Product VALUES(?,?,?,?,?,?)`;
         db.run(sql, [req.body.id, req.body.p_name, req.body.size, req.body.color, req.body.rate, req.body.rattler], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
             res.status(201).send();
         });
@@ -104,7 +147,7 @@ managerRouter.put('/project/edit', managerAuth, async (req, res) => {
         const sql = `UPDATE Project SET C_name=?, Priority=?, Deadline=? WHERE Name=?`;
         db.run(sql, [req.body.c_name, req.body.priority, req.body.deadline, req.body.name], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
             res.status(200).send();
         });
@@ -119,7 +162,7 @@ managerRouter.put('/project/product/edit', managerAuth, async (req, res) => {
         const sql = `UPDATE Product SET P_name=?, Size=?, Color=?, Rate=?, Rattler=? WHERE Id=?`;
         db.run(sql, [req.body.p_name, req.body.size, req.body.color, req.body.rate, req.body.rattler, req.body.id], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
             res.status(200).send();
         });
@@ -134,16 +177,16 @@ managerRouter.delete('/project/remove', managerAuth, async (req, res) => {
         db.parallelize(() => {
             db.run(`DELETE FROM Project WHERE Name=?`, req.body.name, (err) => {
                 if (err) {
-                    throw new Error(err);
+                    return res.status(500).send({ error: err.message });
                 }
             });
             db.run(`DELETE FROM Product WHERE P_name=?`, req.body.name, (err) => {
                 if (err) {
-                    throw new Error(err);
+                    return res.status(500).send({ error: err.message });
                 }
+                res.status(204).send();
             });
         })
-        res.status(204).send();
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -154,10 +197,10 @@ managerRouter.post('/worker/add', managerAuth, async (req, res) => {
     try {
         db.run(`INSERT INTO Worker VALUES (?,?,?,?)`, [req.body.id, req.body.name, req.body.username, req.body.password], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
+            res.status(201).send();
         })
-        res.status(201).send();
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -168,22 +211,22 @@ managerRouter.delete('/worker/remove', managerAuth, async (req, res) => {
     try {
         db.run(`DELETE FROM Worker WHERE Id=?`, req.body.id, (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
+            res.status(204).send();
         })
-        res.status(204).send();
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
 })
 
 //edit a worker's info
-managerRouter.put('/project/worker/edit', managerAuth, async (req, res) => {
+managerRouter.put('/worker/edit', managerAuth, async (req, res) => {
     try {
-        const sql = `UPDATE Worker SET Name=?, Username=?, Password=?, WHERE Id=?`;
+        const sql = `UPDATE Worker SET Name=?, Username=?, Password=? WHERE Id=?`;
         db.run(sql, [req.body.name, req.body.username, req.body.password, req.body.id], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
             res.status(200).send();
         });
@@ -192,21 +235,36 @@ managerRouter.put('/project/worker/edit', managerAuth, async (req, res) => {
     }
 })
 
-module.exports = managerRouter;
+//add payment
+managerRouter.post('/payment/add', managerAuth, async (req, res) => {
+    try {
+        const sql = `INSERT INTO Payment VALUES (?,?,?,?,?,?)`;
+        db.run(sql, [req.body.date_paid, req.user.id, req.body.submit_time, req.body.SW_id, req.body.SM_id, req.body.amount], (err) => {
+            if (err) {
+                return res.status(500).send({ error: err.message });
+            }
+            res.status(201).send();
+        });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+})
 
 //view payment
 managerRouter.post('/payment/view', managerAuth, async (req, res) => {
     try {
-        const sql = `SELECT * FROM Project, WHERE W_id=? AND M_id=? AND Submit_time=? AND SW_id=? AND SM_id=?`;
+        const sql = `SELECT * FROM Payment`;
         let result = [];
-        db.each(sql, (err, row) => {
+        db.all(sql, (err, rows) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
-            result.push({
-                date_paid: row.Date_paid,
-                amount: row.Amount
-            });
+            rows.forEach(row => {
+                result.push({
+                    date_paid: row.Date_paid,
+                    amount: row.Amount
+                });
+            })
             res.status(200).send(result);
         });
     } catch (err) {
@@ -214,13 +272,13 @@ managerRouter.post('/payment/view', managerAuth, async (req, res) => {
     }
 })
 
-//Assigning task
-managerRouter.post('/supply/assign', managerAuth, async (req, res) => {
+//Add task
+managerRouter.post('/supply/add', managerAuth, async (req, res) => {
     try {
         const sql = `INSERT INTO Supply VALUES (?,?,?,?,?)`;
         db.run(sql, [req.body.id, req.body.w_id, req.body.name, req.body.quantity, req.body.expected], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
             res.status(201).send();
         });
@@ -228,16 +286,14 @@ managerRouter.post('/supply/assign', managerAuth, async (req, res) => {
         res.status(500).send({ error: err.message });
     }
 })
-
-
 
 //Add Submission
 managerRouter.post('/submission/add', managerAuth, async (req, res) => {
     try {
         const sql = `INSERT INTO Submission VALUES (?,?,?,?)`;
-        db.run(sql, [req.body.submit_time, req.body.w_id, req.body.m_id, req.body[`#product`]], (err) => {
+        db.run(sql, [req.body.submit_time, req.body.w_id, req.user.id, req.body.quantity], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
             res.status(201).send();
         });
@@ -246,14 +302,13 @@ managerRouter.post('/submission/add', managerAuth, async (req, res) => {
     }
 })
 
-
 //Edit Submission
-managerRouter.put('/submission/add', managerAuth, async (req, res) => {
+managerRouter.put('/submission/edit', managerAuth, async (req, res) => {
     try {
-        const sql = `UPDATE Submission SET #product=? WHERE W_id=? AND M_id=? AND Submit_time=?`;
-        db.run(sql, [req.body[`#product`], req.body.w_id, req.body.m_id, req.body.submit_time], (err) => {
+        const sql = `UPDATE Submission SET Quantity=? WHERE W_id=? AND M_id=? AND Submit_time=?`;
+        db.run(sql, [req.body.quantity, req.body.w_id, req.user.id, req.body.submit_time], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
             res.status(200).send();
         });
@@ -265,12 +320,12 @@ managerRouter.put('/submission/add', managerAuth, async (req, res) => {
 //Remove Submission
 managerRouter.delete('/submission/remove', managerAuth, async (req, res) => {
     try {
-        db.run(`DELETE FROM Submission WHERE W_id=? AND M_id=? AND Submit_time=?`, [req.body.w_id, req.body.m_id, req.body.submit_time], (err) => {
+        db.run(`DELETE FROM Submission WHERE W_id=? AND M_id=? AND Submit_time=?`, [req.body.w_id, req.user.id, req.body.submit_time], (err) => {
             if (err) {
-                throw new Error(err);
+                return res.status(500).send({ error: err.message });
             }
+            res.status(204).send();
         })
-        res.status(204).send();
     } catch (err) {
         res.status(500).send({ error: err.message });
     }

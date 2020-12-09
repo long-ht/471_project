@@ -4,7 +4,7 @@
   "description": "Final project for CPSC 471",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "db": "node .\\mockData\\mockData.js",
     "start": "node index.js"
   },
   "author": "Long Tran, Ragya Mittal, Abid Al Labib",

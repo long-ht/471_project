@@ -7,7 +7,6 @@ const workerRouter = express.Router();
 workerRouter.post('/login', async (req, res) => {
     try {
         const sql = `SELECT * FROM Worker WHERE Username=? AND Password=?`;
-        console.log(req.body);
         db.get(sql, [req.body.username, req.body.password], (err, row) => {
             if (err || row == null) {
                 return res.status(400).send({ error: `Invalid credentials` });
@@ -65,6 +64,7 @@ workerRouter.post('/submission', workerAuth, async (req, res) => {
             }
             rows.forEach((row) => {
                 result.push({
+                    id: row.Id,
                     submit_time: row.Submit_time,
                     w_id: row.W_id,
                     m_id: row.M_id,
@@ -81,7 +81,7 @@ workerRouter.post('/submission', workerAuth, async (req, res) => {
 //view worker payment
 workerRouter.post('/payment', workerAuth, async (req, res) => {
     try {
-        const sql = `SELECT * FROM Payment WHERE SW_id=?`;
+        const sql = `SELECT * FROM Payment, Submission WHERE Submission.W_id=? AND Payment.S_id=Submission.Id`;
         let result = [];
         db.all(sql, [req.user.id], (err, rows) => {
             if (err) {
@@ -89,6 +89,7 @@ workerRouter.post('/payment', workerAuth, async (req, res) => {
             }
             rows.forEach(row => {
                 result.push({
+                    s_id: row.S_id,
                     date_paid: row.Date_paid,
                     amount: row.Amount
                 });

@@ -93,7 +93,7 @@ const createSupply = () => {
                     throw new Error(err);
                 }
             })
-            db.run(`create table Supply (Id TEXT NOT NULL, W_id TEXT NOT NULL, Name TEXT, Quantity INTEGER NOT NULL, Expected INTEGER NOT NULL, PRIMARY KEY (Name), FOREIGN KEY (W_id) REFERENCES Worker(Id))`, (err) => {
+            db.run(`create table Supply (Id TEXT NOT NULL, W_id TEXT NOT NULL, Name TEXT, Quantity INTEGER NOT NULL, Expected INTEGER NOT NULL, PRIMARY KEY (Id), FOREIGN KEY (W_id) REFERENCES Worker(Id))`, (err) => {
                 if (err) {
                     throw new Error(err);
                 }
@@ -114,7 +114,7 @@ const createSubmission = () => {
                     throw new Error(err);
                 }
             })
-            db.run(`create table Submission (Submit_time TEXT NOT NULL, W_id TEXT NOT NULL, M_id TEXT NOT NULL, Quantity INTEGER NOT NULL, FOREIGN KEY (W_id) REFERENCES Worker(Id),FOREIGN KEY (M_id) REFERENCES Manager(Id))`, (err) => {
+            db.run(`create table Submission (Id TEXT NOT NULL, Submit_time TEXT NOT NULL, W_id TEXT NOT NULL, M_id TEXT NOT NULL, Quantity INTEGER NOT NULL, PRIMARY KEY(Id),FOREIGN KEY (W_id) REFERENCES Worker(Id),FOREIGN KEY (M_id) REFERENCES Manager(Id))`, (err) => {
                 if (err) {
                     throw new Error(err);
                 }
@@ -156,7 +156,7 @@ const createPayment = () => {
                     throw new Error(err);
                 }
             })
-            db.run(`create table Payment (Date_paid TEXT NOT NULL, M_id TEXT NOT NULL, Submit_time TEXT NOT NULL, SW_id TEXT NOT NULL, SM_id TEXT NOT NULL, Amount INTEGER NOT NULL, FOREIGN KEY (M_id) REFERENCES Manager(Id), FOREIGN KEY (Submit_time) REFERENCES Submission(Submit_time), FOREIGN KEY (SW_id) REFERENCES Submission(W_id), FOREIGN KEY (SM_id) REFERENCES Submission(M_id))`, (err) => {
+            db.run(`create table Payment (S_id TEXT NOT NULL, Date_paid TEXT NOT NULL, M_id TEXT NOT NULL, Amount INTEGER NOT NULL, FOREIGN KEY (M_id) REFERENCES Manager(Id), FOREIGN KEY (S_id) REFERENCES Submission(Id))`, (err) => {
                 if (err) {
                     throw new Error(err);
                 }
@@ -266,7 +266,7 @@ const populateSupply = () => {
 const populateSubmission = () => {
     try {
         db.serialize(() => {
-            db.run(`INSERT INTO Submission VALUES(?,?,?,?)`, [`2020-12-08 12:10`, `wjfioqwfjqwofiw`, `wagfwwwwfw33eee`, 20], (err) => {
+            db.run(`INSERT INTO Submission VALUES(?,?,?,?,?)`, [`afwfwwfwf`, `2020-12-08 12:10`, `wjfioqwfjqwofiw`, `wagfwwwwfw33eee`, 20], (err) => {
                 if (err) {
                     throw new Error(err);
                 }

@@ -50,12 +50,16 @@ managerRouter.post('/project/view', managerAuth, async (req, res) => {
 managerRouter.post('/company/add', managerAuth, async (req, res) => {
     try {
         const sql = `INSERT INTO Company VALUES (?,?,?,?)`;
-        db.run(sql, [req.body.name, req.body.phone, req.body.email, req.body.address], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(201).send();
-        });
+        if (typeof req.body.phone == "number") {
+            db.run(sql, [req.body.name, req.body.phone, req.body.email, req.body.address], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(201).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -89,12 +93,17 @@ managerRouter.post('/company/view', managerAuth, async (req, res) => {
 managerRouter.post('/project/add', managerAuth, async (req, res) => {
     try {
         const sql = `INSERT INTO Project VALUES (?,?,?,?)`;
-        db.run(sql, [req.body.name, req.body.c_name, req.body.priority, req.body.deadline], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(201).send();
-        });
+        const d = new Date(req.body.deadline);
+        if (typeof req.body.priority == "number" && !isNaN(d.getTime())) {
+            db.run(sql, [req.body.name, req.body.c_name, req.body.priority, req.body.deadline], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(201).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -130,12 +139,16 @@ managerRouter.post('/project/product/view', managerAuth, async (req, res) => {
 managerRouter.post('/project/product/add', managerAuth, async (req, res) => {
     try {
         const sql = `INSERT INTO Product VALUES(?,?,?,?,?,?)`;
-        db.run(sql, [req.body.id, req.body.p_name, req.body.size, req.body.color, req.body.rate, req.body.rattler], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(201).send();
-        });
+        if (typeof req.body.size == "number" && typeof req.body.rate == "number") {
+            db.run(sql, [req.body.id, req.body.p_name, req.body.size, req.body.color, req.body.rate, req.body.rattler], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(201).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -145,12 +158,17 @@ managerRouter.post('/project/product/add', managerAuth, async (req, res) => {
 managerRouter.put('/project/edit', managerAuth, async (req, res) => {
     try {
         const sql = `UPDATE Project SET C_name=?, Priority=?, Deadline=? WHERE Name=?`;
-        db.run(sql, [req.body.c_name, req.body.priority, req.body.deadline, req.body.name], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(200).send();
-        });
+        const d = new Date(req.body.deadline);
+        if (typeof req.body.priority == "number" && !isNaN(d.getTime())) {
+            db.run(sql, [req.body.c_name, req.body.priority, req.body.deadline, req.body.name], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(200).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -160,12 +178,16 @@ managerRouter.put('/project/edit', managerAuth, async (req, res) => {
 managerRouter.put('/project/product/edit', managerAuth, async (req, res) => {
     try {
         const sql = `UPDATE Product SET P_name=?, Size=?, Color=?, Rate=?, Rattler=? WHERE Id=?`;
-        db.run(sql, [req.body.p_name, req.body.size, req.body.color, req.body.rate, req.body.rattler, req.body.id], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(200).send();
-        });
+        if (typeof req.body.rate == "number" && typeof req.body.size == "number") {
+            db.run(sql, [req.body.p_name, req.body.size, req.body.color, req.body.rate, req.body.rattler, req.body.id], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(200).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -230,6 +252,7 @@ managerRouter.put('/worker/edit', managerAuth, async (req, res) => {
             }
             res.status(200).send();
         });
+
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -238,13 +261,18 @@ managerRouter.put('/worker/edit', managerAuth, async (req, res) => {
 //add payment
 managerRouter.post('/payment/add', managerAuth, async (req, res) => {
     try {
-        const sql = `INSERT INTO Payment VALUES (?,?,?,?,?,?)`;
-        db.run(sql, [req.body.date_paid, req.user.id, req.body.submit_time, req.body.SW_id, req.body.SM_id, req.body.amount], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(201).send();
-        });
+        const sql = `INSERT INTO Payment VALUES (?,?,?,?)`;
+        const d1 = new Date(req.body.date_paid);
+        if (typeof req.body.amount == "number" && !isNaN(d1.getTime())) {
+            db.run(sql, [req.body.s_id, req.body.date_paid, req.user.id, req.body.amount], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(201).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -261,6 +289,7 @@ managerRouter.post('/payment/view', managerAuth, async (req, res) => {
             }
             rows.forEach(row => {
                 result.push({
+                    s_id: row.S_id,
                     date_paid: row.Date_paid,
                     amount: row.Amount
                 });
@@ -276,12 +305,17 @@ managerRouter.post('/payment/view', managerAuth, async (req, res) => {
 managerRouter.post('/supply/add', managerAuth, async (req, res) => {
     try {
         const sql = `INSERT INTO Supply VALUES (?,?,?,?,?)`;
-        db.run(sql, [req.body.id, req.body.w_id, req.body.name, req.body.quantity, req.body.expected], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(201).send();
-        });
+
+        if (typeof req.body.expected == "number" && typeof req.body.quantity == "number") {
+            db.run(sql, [req.body.id, req.body.w_id, req.body.name, req.body.quantity, req.body.expected], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(201).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -290,13 +324,18 @@ managerRouter.post('/supply/add', managerAuth, async (req, res) => {
 //Add Submission
 managerRouter.post('/submission/add', managerAuth, async (req, res) => {
     try {
-        const sql = `INSERT INTO Submission VALUES (?,?,?,?)`;
-        db.run(sql, [req.body.submit_time, req.body.w_id, req.user.id, req.body.quantity], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(201).send();
-        });
+        const sql = `INSERT INTO Submission VALUES (?,?,?,?,?)`;
+        const d = new Date(req.body.submit_time);
+        if (typeof req.body.quantity == "number" && !isNaN(d.getTime())) {
+            db.run(sql, [req.body.id, req.body.submit_time, req.body.w_id, req.user.id, req.body.quantity], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(201).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -305,13 +344,17 @@ managerRouter.post('/submission/add', managerAuth, async (req, res) => {
 //Edit Submission
 managerRouter.put('/submission/edit', managerAuth, async (req, res) => {
     try {
-        const sql = `UPDATE Submission SET Quantity=? WHERE W_id=? AND M_id=? AND Submit_time=?`;
-        db.run(sql, [req.body.quantity, req.body.w_id, req.user.id, req.body.submit_time], (err) => {
-            if (err) {
-                return res.status(500).send({ error: err.message });
-            }
-            res.status(200).send();
-        });
+        const sql = `UPDATE Submission SET Quantity=? WHERE Id=?`;
+        if (typeof req.body.quantity == "number") {
+            db.run(sql, [req.body.quantity, req.body.id], (err) => {
+                if (err) {
+                    return res.status(500).send({ error: err.message });
+                }
+                res.status(200).send();
+            });
+        } else {
+            res.status(422).send("Invalid input");
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
@@ -320,7 +363,7 @@ managerRouter.put('/submission/edit', managerAuth, async (req, res) => {
 //Remove Submission
 managerRouter.delete('/submission/remove', managerAuth, async (req, res) => {
     try {
-        db.run(`DELETE FROM Submission WHERE W_id=? AND M_id=? AND Submit_time=?`, [req.body.w_id, req.user.id, req.body.submit_time], (err) => {
+        db.run(`DELETE FROM Submission WHERE Id=?`, [req.body.id], (err) => {
             if (err) {
                 return res.status(500).send({ error: err.message });
             }
